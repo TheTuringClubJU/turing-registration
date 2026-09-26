@@ -4,11 +4,9 @@ on:
   pull_request:
     branches:
       - main
-      - "feat/**"
   push:
     branches:
-      - main
-      - "feat/**"
+      - "**"
 
 jobs:
   test:
@@ -44,12 +42,11 @@ jobs:
 
       - name: Run migrations
         run: |
-          # placeholder — wire this up once schema.sql / alembic exists
           echo "no migrations yet"
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/turing_registration_test
 
       - name: Run tests
-        run: pytest --cov=app --cov-report=term-missing
+        run: python -m pytest --cov=app --cov-report=term-missing
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/turing_registration_test
