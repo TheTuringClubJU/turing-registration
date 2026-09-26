@@ -50,3 +50,5 @@ jobs:
         run: python -m pytest --cov=app --cov-report=term-missing
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/turing_registration_test
+          BREVO_API_KEY: test-brevo-api-key
+          JWT_SECRET: test-jwt-secret
