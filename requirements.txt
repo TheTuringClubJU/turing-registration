@@ -7,3 +7,4 @@ pytest
 pytest-cov
 httpx
 pydantic-settings
+psycopg[binary]
