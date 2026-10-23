@@ -3,7 +3,10 @@
 Covers: `events/`, `registrations/`, `email_templates/`, `core/`.
 Attendance/QR/organiser-scan is tracked separately in `todo_attendance.md`.
 
-## Database
+**Owners:** Darsh = database + email · Vishad = backend + backend tests · Sahan = frontend (to be confirmed)
+Each section has an owner. An item tagged `[Name]` overrides its section owner.
+
+## Database — Owner: Darsh
 
 - [ ] Write `schema.sql` — source of truth, run manually to create tables
 - [ ] `events` table: id, event_code, slug, name, type (ENUM), min_team_size, max_team_size, is_active, reg_open_at, reg_close_at, created_at, updated_at
@@ -16,12 +19,12 @@ Attendance/QR/organiser-scan is tracked separately in `todo_attendance.md`.
 - [ ] Confirm Neon project created, connection string in hand (not committed anywhere)
 - [ ] Set up a Neon branch for CI (or confirm local Postgres container fallback — see Open Decisions)
 
-## Backend (FastAPI)
+## Backend (FastAPI) — Owner: Vishad
 
 ### core/
 - [ ] `config.py` — env vars: DB URL, Brevo API key, JWT secret, CORS allowed origins
 - [ ] `database.py` — SQLAlchemy engine + session, shared by every domain
-- [ ] `security.py` — organiser JWT auth (needed for attendance later, but scaffold now so both modules share it)
+- [ ] `security.py` — organiser JWT auth `[Sukrit]` — owned in `todo_attendance.md`, built there first; scaffold shared by both modules
 
 ### events/
 - [ ] `models.py` — SQLAlchemy Event model, mirrors `schema.sql` exactly
@@ -44,9 +47,12 @@ Attendance/QR/organiser-scan is tracked separately in `todo_attendance.md`.
   - [ ] duplicate-email check across p1–p4 for the same `event_id` (on normalised emails)
   - [ ] calls QR generation (from `attendance/qr.py`) after commit — see integration note below
   - [ ] fires `email_templates.send_registration_confirmation()` via BackgroundTasks
+  - [ ] creates the `attendance` row (`not_checked_in`) in the same transaction — coordinate with Sukrit (`todo_attendance.md`)
 - [ ] `router.py` — `POST /events/{slug}/register`
   - [ ] rejects if `reg_open` is false / `reg_close_at` passed / event not active (pending Open Decision)
   - [ ] returns structured 422 with field-level errors on validation failure
+
+## Email — Owner: Darsh
 
 ### email_templates/
 - [ ] `send.py` — `send_registration_confirmation(to, event, team_name, participants, qr_bytes, registration_id)`
@@ -56,7 +62,7 @@ Attendance/QR/organiser-scan is tracked separately in `todo_attendance.md`.
   - [ ] sent via Brevo transactional email API
 - [ ] Confirm Brevo account created, sender domain verified, API key stored as env var only
 
-## Frontend
+## Frontend — Owner: Sahan (to be confirmed)
 
 One dynamic form component — no per-event pages, no hardcoding.
 
@@ -76,7 +82,7 @@ One dynamic form component — no per-event pages, no hardcoding.
 
 Keep this to roughly 4–5 files — one form, one submission handler, one error component, one confirmation screen, plus the event-fetch hook. Don't split further than that; don't cram it all into one file either.
 
-## Tests (`tests/events/`, `tests/registrations/`)
+## Tests (`tests/events/`, `tests/registrations/`) — Owner: Vishad
 
 - [ ] `test_event_config.py` — event code format, sequential codes via `next_event_code()`, concurrent creation race (threaded calls never return the same code), `min ≤ max` enforced, `max_team_size > 4` rejected, only-one-active enforced, active/slug lookups
 - [ ] `test_form_field_shape.py` — response includes min/max team size, solo vs team ranges correct
@@ -87,10 +93,10 @@ Keep this to roughly 4–5 files — one form, one submission handler, one error
 - [ ] `test_data_integrity.py` — invalid email/phone rejected, empty required rejected, empty optional ignored, insert is atomic
 - [ ] `test_open_close.py` — rejected when `reg_open` false, after `reg_close_at`, if not active (pending decision), succeeds within window
 - [ ] `test_api_contract.py` — same contract across solo/team payloads, returns `registration_id`, field-level error format
-- [ ] `test_email.py` — confirmation sent on success (mocked Brevo), includes QR + plain-text ID + participant names, registration still succeeds if email send fails
-- [ ] GitHub Actions: run on every PR against ephemeral/branched Postgres, block merge on failure or coverage drop
+- [ ] `test_email.py` `[Darsh]` — confirmation sent on success (mocked Brevo), includes QR + plain-text ID + participant names, registration still succeeds if email send fails
+- [ ] GitHub Actions: run on every PR against ephemeral/branched Postgres, block merge on failure or coverage drop `[Darsh]`
 
-## Open Decisions (need sign-off)
+## Open Decisions (need sign-off) — Owner: Darsh
 
 - [ ] Does `is_active = false` (but `reg_open` still true) block registration, or only `reg_open`/`reg_close_at` matter?
 - [ ] Event creation: manual SQL insert for first 1–2 events vs minimal `POST /events` endpoint now
