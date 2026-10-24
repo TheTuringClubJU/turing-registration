@@ -9,7 +9,8 @@ on:
       - "**"
 
 jobs:
-  test:
+  backend-test:
+    name: Backend Tests (Pytest & Coverage)
     runs-on: ubuntu-latest
 
     services:
@@ -47,10 +48,39 @@ jobs:
         env:
           DATABASE_URL: postgresql://test:test@localhost:5432/turing_registration_test
 
-      - name: Run tests
+      - name: Run backend tests
         run: |
           python -m pytest --cov=app --cov-report=term-missing
         env:
+          PYTHONPATH: .
           DATABASE_URL: postgresql://test:test@localhost:5432/turing_registration_test
           BREVO_API_KEY: test-brevo-api-key
-          JWT_SECRET: test-jwt-secret
+          JWT_SECRET: test-jwt-secret-ci
+
+  frontend-test:
+    name: Frontend Tests & Build (Vitest & Vite)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend unit & component tests
+        run: npm test
+
+      - name: Verify production build
+        run: npm run build

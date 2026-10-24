@@ -109,9 +109,17 @@ def login(
     from app.attendance.models import Organiser
     from sqlalchemy import select
 
-    email = payload.identifier
-    organiser = db.scalar(select(Organiser).where(Organiser.username == email))
-    if organiser is None or not verify_password(payload.password, organiser.password_hash):
+    from sqlalchemy import func
+    raw_ident = (payload.identifier or '').strip().lower()
+    clean_pwd = (payload.password or '').strip()
+
+    organiser = db.scalar(
+        select(Organiser).where(func.lower(Organiser.username) == raw_ident)
+    )
+    if organiser is None:
+        print(f'DEBUG: organiser {raw_ident} not found')
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail='Invalid username or password')
+    if not verify_password(clean_pwd, organiser.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid username or password",

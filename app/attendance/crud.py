@@ -127,17 +127,19 @@ def get_list(db: Session, event_id: UUID) -> list[dict]:
     for row in rows:
         attendance = row[0]
         registration = row[1]
+        names = _get_names(registration)
 
         result.append({
             "registration_id": str(attendance.registration_id),
             "ticket_code": getattr(registration, "ticket_code", None) or "",
+            "participant_name": registration.p1_name or (names[0] if names else ""),
+            "participant_names": names,
             "event_id": str(attendance.event_id),
             "status": attendance.status.value,
             "method": attendance.method.value if attendance.method is not None else None,
             "checked_in_at": attendance.checked_in_at.isoformat() if attendance.checked_in_at is not None else None,
             "checked_in_by": str(attendance.checked_in_by) if attendance.checked_in_by is not None else None,
             "team_name": registration.team_name or "",
-            "participant_names": _get_names(registration),
         })
 
     return result

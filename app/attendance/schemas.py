@@ -10,16 +10,18 @@ from app.attendance.models import AttendanceStatus, CheckinMethod
 class CheckinRequest(BaseModel):
     registration_id: Optional[str] = Field(None, description="The unique registration ID or ticket code of the attendee")
     identifier: Optional[str] = Field(None, description="Alternative field for ticket code or registration ID")
+    query: Optional[str] = Field(None, description="Alternative field for query/identifier")
 
     @property
-    def query(self) -> str:
-        return (self.registration_id or self.identifier or "").strip()
+    def target_query(self) -> str:
+        return (self.query or self.registration_id or self.identifier or "").strip()
 
 
 class AttendanceOut(BaseModel):
     registration_id: UUID = Field(..., description="The registration this attendance record belongs to")
     ticket_code: Optional[str] = Field(None, description="Short ticket code (e.g. TTC-7K9X)")
     participant_name: Optional[str] = Field(None, description="Primary attendee or team lead name")
+    participant_names: Optional[list[str]] = Field(default_factory=list, description="All participant names in team/solo")
     team_name: Optional[str] = Field(None, description="Team name if applicable")
     status: AttendanceStatus = Field(..., description="Check-in status")
     method: Optional[CheckinMethod] = Field(None, description="Check-in method (qr or manual)")

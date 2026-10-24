@@ -63,7 +63,7 @@ def scan(
     organiser: Organiser = Depends(require_valid_organiser),
 ):
     """QR scan check-in — accepts raw UUID or ticket_code."""
-    return _checkin(payload.query, CheckinMethod.qr, db, organiser)
+    return _checkin(payload.target_query, CheckinMethod.qr, db, organiser)
 
 
 @router.post("/manual-checkin", response_model=AttendanceOut)
@@ -73,7 +73,7 @@ def manual_checkin(
     organiser: Organiser = Depends(require_valid_organiser),
 ):
     """Manual check-in — accepts short ticket_code (e.g. TTC-7K9X) or raw UUID."""
-    return _checkin(payload.query, CheckinMethod.manual, db, organiser)
+    return _checkin(payload.target_query, CheckinMethod.manual, db, organiser)
 
 
 @router.get("/summary", response_model=SummaryOut)

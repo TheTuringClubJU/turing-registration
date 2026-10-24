@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import CheckinAnimation from "./CheckinAnimation";
 import ManualCheckinInput from "./ManualCheckinInput";
 import QRScanner from "./QRScanner";
 import ResultDisplay from "./ResultDisplay";
@@ -11,6 +12,7 @@ function AttendanceDashboard({ token, onLogout }) {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [lastResult, setLastResult] = useState(null);
+  const [animationData, setAnimationData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -58,8 +60,19 @@ function AttendanceDashboard({ token, onLogout }) {
 
   const handleCheckinComplete = (result) => {
     setLastResult(result);
+
+    // Trigger full-screen 1.5s animation
     if (result.type === "success") {
+      setAnimationData({
+        type: "success",
+        name: result.data?.participant_name || "",
+      });
       fetchDashboardData();
+    } else {
+      setAnimationData({
+        type: "error",
+        name: result.message || "Ticket Not Admitted",
+      });
     }
   };
 
@@ -71,15 +84,24 @@ function AttendanceDashboard({ token, onLogout }) {
     const codeMatch = item.ticket_code?.toLowerCase().includes(term);
     const idMatch = item.registration_id?.toLowerCase().includes(term);
     const teamMatch = item.team_name?.toLowerCase().includes(term);
-    const nameMatch = item.participant_names?.some((name) =>
-      name.toLowerCase().includes(term)
-    );
+    const nameMatch =
+      item.participant_name?.toLowerCase().includes(term) ||
+      item.participant_names?.some((name) => name.toLowerCase().includes(term));
 
     return codeMatch || idMatch || teamMatch || nameMatch;
   });
 
   return (
     <div style={styles.page}>
+      {/* 1.5s Fullscreen Visual Feedback Animation */}
+      {animationData && (
+        <CheckinAnimation
+          type={animationData.type}
+          name={animationData.name}
+          onClose={() => setAnimationData(null)}
+        />
+      )}
+
       {/* Responsive Top Bar */}
       <nav style={styles.navBar}>
         <div style={styles.navInner}>
@@ -199,13 +221,13 @@ function AttendanceDashboard({ token, onLogout }) {
                 onClick={() => setFilter("checked_in")}
                 style={filter === "checked_in" ? styles.pillActive : styles.pill}
               >
-                Admitted ({attendees.filter(a => a.status === 'checked_in').length})
+                Admitted ({attendees.filter((a) => a.status === "checked_in").length})
               </button>
               <button
                 onClick={() => setFilter("not_checked_in")}
                 style={filter === "not_checked_in" ? styles.pillActive : styles.pill}
               >
-                Pending ({attendees.filter(a => a.status !== 'checked_in').length})
+                Pending ({attendees.filter((a) => a.status !== "checked_in").length})
               </button>
             </div>
 
@@ -222,54 +244,57 @@ function AttendanceDashboard({ token, onLogout }) {
             {filteredAttendees.length === 0 ? (
               <div style={styles.emptyState}>No attendee records found.</div>
             ) : (
-              filteredAttendees.map((att) => (
-                <div key={att.registration_id} style={styles.attendeeCard}>
-                  <div style={styles.cardTop}>
-                    <div style={styles.badgeCluster}>
-                      <span style={styles.cardCode}>
-                        {att.ticket_code || att.registration_id.slice(0, 8)}
-                      </span>
-                      {att.team_name ? (
-                        <span style={styles.teamPill}>
-                          Team: {att.team_name}
+              filteredAttendees.map((att) => {
+                const names =
+                  att.participant_names && att.participant_names.length > 0
+                    ? att.participant_names.join(" • ")
+                    : att.participant_name || "Participant";
+
+                return (
+                  <div key={att.registration_id} style={styles.attendeeCard}>
+                    <div style={styles.cardTop}>
+                      <div style={styles.badgeCluster}>
+                        <span style={styles.cardCode}>
+                          {att.ticket_code || att.registration_id.slice(0, 8)}
                         </span>
-                      ) : (
-                        <span style={styles.soloPill}>Solo Attendee</span>
-                      )}
+                        {att.team_name ? (
+                          <span style={styles.teamPill}>
+                            Team: {att.team_name}
+                          </span>
+                        ) : (
+                          <span style={styles.soloPill}>Solo Attendee</span>
+                        )}
+                      </div>
+
+                      <span
+                        style={
+                          att.status === "checked_in"
+                            ? styles.badgeChecked
+                            : styles.badgeUnchecked
+                        }
+                      >
+                        {att.status === "checked_in" ? "✓ Admitted" : "• Pending"}
+                      </span>
                     </div>
 
-                    <span
-                      style={
-                        att.status === "checked_in"
-                          ? styles.badgeChecked
-                          : styles.badgeUnchecked
-                      }
-                    >
-                      {att.status === "checked_in" ? "✓ Admitted" : "• Pending"}
-                    </span>
-                  </div>
-
-                  {/* Prominent Attendee / Members Name Block */}
-                  <div style={styles.personBlock}>
-                    <span style={styles.personIcon}>👤</span>
-                    <span style={styles.cardName}>
-                      {att.participant_names && att.participant_names.length > 0
-                        ? att.participant_names.join(" • ")
-                        : "Registered Attendee"}
-                    </span>
-                  </div>
-
-                  {att.checked_in_at && (
-                    <div style={styles.cardMeta}>
-                      Method: {att.method?.toUpperCase()} • Checked in at{" "}
-                      {new Date(att.checked_in_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    {/* Actual Participant & Team Names */}
+                    <div style={styles.personBlock}>
+                      <span style={styles.personIcon}>👤</span>
+                      <span style={styles.cardName}>{names}</span>
                     </div>
-                  )}
-                </div>
-              ))
+
+                    {att.checked_in_at && (
+                      <div style={styles.cardMeta}>
+                        Method: {att.method?.toUpperCase()} • Checked in at{" "}
+                        {new Date(att.checked_in_at).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
             )}
           </div>
         </section>
