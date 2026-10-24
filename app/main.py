@@ -7,6 +7,7 @@ its router.py (events, registrations, attendance).
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
 # Import all models so SQLAlchemy resolves all cross-model relationship mappers
@@ -19,6 +20,31 @@ from app.core.database import engine
 from app.core.security import router as auth_router
 
 app = FastAPI(title="Turing Registration API")
+
+# Allow requests from Vercel frontend, local dev, and public form
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://turing-registration.vercel.app",
+        "http://localhost:5173",
+        "http://localhost:3000",
+        "*",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.get("/")
+def root():
+    """Root info endpoint so root URL doesn't return 404."""
+    return {
+        "status": "ok",
+        "name": "Turing Registration API",
+        "docs": "/docs",
+        "health": "/health",
+    }
 
 
 @app.get("/health")
