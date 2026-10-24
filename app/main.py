@@ -9,7 +9,9 @@ its router.py (events, registrations, attendance).
 from fastapi import FastAPI
 from sqlalchemy import text
 
+from app.attendance.router import router as attendance_router
 from app.core.database import engine
+from app.core.security import router as auth_router
 
 app = FastAPI(title="Turing Registration API")
 
@@ -30,6 +32,5 @@ def health_check():
     return {"status": "ok", "database": db_status}
 
 
-# Routers get mounted here as they're built, e.g.:
-# from app.events.router import router as events_router
-# app.include_router(events_router)
+app.include_router(auth_router)
+app.include_router(attendance_router)
