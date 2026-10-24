@@ -6,7 +6,8 @@ import ResultDisplay from "./ResultDisplay";
 
 function AttendanceDashboard({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState("scan");
-  const [eventId, setEventId] = useState("d945986b-176c-4326-9b2e-5249c1356645");
+  const [eventId, setEventId] = useState(() => localStorage.getItem("active_event_id") || "");
+  const [eventName, setEventName] = useState("");
   const [summary, setSummary] = useState(null);
   const [attendees, setAttendees] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -52,8 +53,34 @@ function AttendanceDashboard({ token, onLogout }) {
     }
   }, [eventId, token, onLogout]);
 
+  // Fetch active event from database if no custom eventId saved
+  useEffect(() => {
+    async function loadActiveEvent() {
+      try {
+        const res = await fetch("/attendance/active-event", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.id) {
+            setEventName(data.name || "");
+            // If nothing saved in localStorage, or saved was the old initial seed, use DB active event
+            if (!localStorage.getItem("active_event_id")) {
+              setEventId(data.id);
+              localStorage.setItem("active_event_id", data.id);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch active event:", e);
+      }
+    }
+    loadActiveEvent();
+  }, [token]);
+
   useEffect(() => {
     if (eventId.trim()) {
+      localStorage.setItem("active_event_id", eventId.trim());
       fetchDashboardData();
     }
   }, [eventId, fetchDashboardData]);

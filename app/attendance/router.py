@@ -15,6 +15,7 @@ from app.attendance.models import CheckinMethod, Organiser
 from app.attendance.schemas import AttendanceOut, CheckinRequest, SummaryOut
 from app.core.database import get_db
 from app.core.security import require_valid_organiser
+from app.events.models import Event
 from app.registrations.models import Registration
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
@@ -94,6 +95,23 @@ def attendance_list(
 ):
     """All attendance records for one event — used by the dashboard table."""
     return crud.get_list(db, event_id)
+
+
+@router.get("/active-event")
+def get_active_event(
+    db: Session = Depends(get_db),
+    _: Organiser = Depends(require_valid_organiser),
+):
+    """Returns the currently active event in the database."""
+    ev = db.scalar(select(Event).where(Event.is_active == True))
+    if ev is None:
+        raise HTTPException(status_code=404, detail="No active event found")
+    return {
+        "id": str(ev.id),
+        "name": ev.name,
+        "event_code": ev.event_code,
+        "type": ev.type.value if hasattr(ev.type, "value") else str(ev.type),
+    }
 
 
 @router.get("/registrations/{registration_id}/qr")
