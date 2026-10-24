@@ -8,3 +8,9 @@ pytest-cov
 httpx
 pydantic-settings
 psycopg[binary]
+pillow
+PyJWT
+bcrypt
+passlib[bcrypt]
+email-validator
+qrcode

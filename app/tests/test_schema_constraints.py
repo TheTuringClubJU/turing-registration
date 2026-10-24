@@ -218,7 +218,7 @@ class TestAttendanceConstraints:
         event, registration = self._make_registration(db_session)
 
         organiser = Organiser(
-            email=f"organiser-{uuid.uuid4().hex[:8]}@example.com",
+            username=f"secretary-{uuid.uuid4().hex[:6]}@ttc",
             password_hash="not-a-real-hash",
             name="Test Organiser",
         )
@@ -237,11 +237,11 @@ class TestAttendanceConstraints:
         db_session.flush()  # should not raise
         assert attendance.id is not None
 
-    def test_organiser_email_must_be_unique(self, db_session):
-        shared_email = f"dup-{uuid.uuid4().hex[:8]}@example.com"
-        db_session.add(Organiser(email=shared_email, password_hash="x", name="A"))
+    def test_organiser_username_must_be_unique(self, db_session):
+        shared_username = f"lead-{uuid.uuid4().hex[:6]}@ttc"
+        db_session.add(Organiser(username=shared_username, password_hash="x", name="A"))
         db_session.flush()
 
         with pytest.raises(IntegrityError):
-            db_session.add(Organiser(email=shared_email, password_hash="y", name="B"))
+            db_session.add(Organiser(username=shared_username, password_hash="y", name="B"))
             db_session.flush()
