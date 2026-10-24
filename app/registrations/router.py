@@ -58,6 +58,7 @@ def _send_confirmation_background(
             participants=participants_dict,
             qr_bytes=qr_bytes,
             registration_id=registration_id_str,
+            ticket_code=ticket_code,
         )
     except Exception as exc:
         logger.error(
