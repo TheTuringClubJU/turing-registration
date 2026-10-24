@@ -72,7 +72,8 @@ def test_success_and_provider_failures_preserve_201(offline_client, monkeypatch,
         assert deliver.call_args.kwargs["qr_bytes"] == b"mock-image"
 
 
-def test_missing_owner_providers_are_reported_as_pending(caplog):
+def test_missing_owner_providers_are_reported_as_pending(caplog, monkeypatch):
+    monkeypatch.setattr(send, "send_registration_confirmation", None)
     _send_confirmation_background("test@example.com", {"name": "Test"}, None, [], str(uuid4()))
     assert "Confirmation pending" in caplog.text
     assert "test@example.com" not in caplog.text
