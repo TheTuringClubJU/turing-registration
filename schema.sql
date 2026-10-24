@@ -43,6 +43,37 @@ CREATE UNIQUE INDEX only_one_active_event
     WHERE is_active = TRUE;
 
 -- ------------------------------------------------------------
+-- event_counters — race-safe sequential event codes
+-- One row per (type, year). Never write to this directly;
+-- call next_event_code() below.
+-- ------------------------------------------------------------
+CREATE TABLE event_counters (
+    type      event_type NOT NULL,
+    year      INT NOT NULL,
+    last_seq  INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (type, year)
+);
+
+-- Returns the next event_code, e.g. next_event_code('workshop', 2026) -> 'WORKSHOP-2026-001'.
+-- The INSERT ... ON CONFLICT DO UPDATE takes a row lock, so two concurrent
+-- callers can never receive the same number. Call it in the same transaction
+-- as the events INSERT so a rolled-back insert doesn't burn a number.
+CREATE OR REPLACE FUNCTION next_event_code(p_type event_type, p_year INT)
+RETURNS TEXT AS $$
+DECLARE
+    n INT;
+BEGIN
+    INSERT INTO event_counters (type, year, last_seq)
+    VALUES (p_type, p_year, 1)
+    ON CONFLICT (type, year)
+    DO UPDATE SET last_seq = event_counters.last_seq + 1
+    RETURNING last_seq INTO n;
+
+    RETURN upper(replace(p_type::text, '_', '')) || '-' || p_year || '-' || lpad(n::text, 3, '0');
+END;
+$$ LANGUAGE plpgsql;
+
+-- ------------------------------------------------------------
 -- registrations
 -- ------------------------------------------------------------
 
@@ -102,8 +133,8 @@ CREATE TABLE organisers (
 CREATE TABLE attendance (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     registration_id UUID UNIQUE NOT NULL REFERENCES registrations(id),
-    event_id        UUID NOT NULL REFERENCES events(id),
-    ticket_code     VARCHAR(16) UNIQUE,  -- denormalized for fast per-event dashboard queries
+    event_id        UUID NOT NULL REFERENCES events(id),   -- denormalized for fast per-event dashboard queries
+    ticket_code     VARCHAR(16) UNIQUE,
 
     status          attendance_status NOT NULL DEFAULT 'not_checked_in',
     method          checkin_method,          -- nullable until checked in
@@ -122,4 +153,3 @@ CREATE TABLE attendance (
 );
 
 CREATE INDEX idx_attendance_event_id ON attendance (event_id);
-
