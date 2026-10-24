@@ -48,7 +48,7 @@ def _make_registration(db, event):
 
 def _make_organiser(db):
     org = Organiser(
-        email=f"org-{uuid.uuid4().hex[:8]}@example.com",
+        username=f"techlead-{uuid.uuid4().hex[:6]}@ttc",
         password_hash="hashed",
         name="Test Organiser",
     )
@@ -98,3 +98,4 @@ def test_checked_in_by_records_correct_organiser(db_session):
     ev, reg, att, org = _seed(db_session)
     result = crud.mark_attended(db_session, reg.id, CheckinMethod.qr, org.id)
     assert result.checked_in_by == org.id
+

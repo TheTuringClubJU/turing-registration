@@ -88,7 +88,7 @@ CREATE INDEX idx_registrations_event_id ON registrations (event_id);
 
 CREATE TABLE organisers (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email           VARCHAR(320) UNIQUE NOT NULL,
+    username        VARCHAR(100) UNIQUE NOT NULL,
     password_hash   VARCHAR(255) NOT NULL,
     name            VARCHAR(200) NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()

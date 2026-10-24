@@ -8,13 +8,13 @@ from pydantic import BaseModel, Field
 
 
 class LoginRequest(BaseModel):
-    email: Optional[str] = Field(None, description="Organiser email address")
-    username: Optional[str] = Field(None, description="Username/email alias for compatibility")
+    username: Optional[str] = Field(None, description="Organiser username handle")
+    email: Optional[str] = Field(None, description="Alias for username for backward compatibility")
     password: str = Field(..., description="Organiser plaintext password")
 
     @property
     def identifier(self) -> str:
-        return self.email or self.username or ""
+        return self.username or self.email or ""
 
 
 class TokenResponse(BaseModel):

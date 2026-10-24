@@ -110,12 +110,13 @@ def login(
     from sqlalchemy import select
 
     email = payload.identifier
-    organiser = db.scalar(select(Organiser).where(Organiser.email == email))
+    organiser = db.scalar(select(Organiser).where(Organiser.username == email))
     if organiser is None or not verify_password(payload.password, organiser.password_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
     token = _create_token(organiser.id)
     return TokenResponse(access_token=token, token_type="bearer")
+

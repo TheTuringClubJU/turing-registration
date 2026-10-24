@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 function OrganiserLogin({ onLoginSuccess }) {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -17,13 +17,13 @@ function OrganiserLogin({ onLoginSuccess }) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.detail || "Invalid email or password");
+        throw new Error(data.detail || "Invalid username or password");
       }
 
       localStorage.setItem("organiser_token", data.access_token);
@@ -49,7 +49,7 @@ function OrganiserLogin({ onLoginSuccess }) {
             </svg>
           </div>
           <h1 style={styles.title}>Turing Check-in</h1>
-          <p style={styles.subtitle}>Sign in to access the organiser desk</p>
+          <p style={styles.subtitle}>Sign in with your organiser handle</p>
         </div>
 
         {error && (
@@ -60,18 +60,18 @@ function OrganiserLogin({ onLoginSuccess }) {
 
         <form onSubmit={handleLogin} style={styles.form}>
           <div style={styles.inputGroup}>
-            <label htmlFor="email" style={styles.label}>
-              Email address
+            <label htmlFor="username" style={styles.label}>
+              Organiser handle
             </label>
             <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="organiser@turingclub.org"
+              id="username"
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="lead@ttc (e.g. techlead@ttc)"
               required
               style={styles.input}
-              autoComplete="email"
+              autoComplete="username"
             />
           </div>
 
@@ -103,7 +103,7 @@ function OrganiserLogin({ onLoginSuccess }) {
         </form>
 
         <p style={styles.footerNote}>
-          Authorized organizers and event leads only
+          Restricted to accredited club leads (e.g. techlead@ttc, president@ttc)
         </p>
       </div>
     </div>

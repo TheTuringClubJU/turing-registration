@@ -8,10 +8,10 @@ describe("OrganiserLogin Regression Tests", () => {
     localStorage.clear();
   });
 
-  it("renders email and password inputs and submit button", () => {
+  it("renders username handle and password inputs and submit button", () => {
     render(<OrganiserLogin onLoginSuccess={vi.fn()} />);
 
-    expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/organiser handle/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /continue/i })).toBeInTheDocument();
   });
@@ -30,8 +30,8 @@ describe("OrganiserLogin Regression Tests", () => {
     const onLoginSuccess = vi.fn();
     render(<OrganiserLogin onLoginSuccess={onLoginSuccess} />);
 
-    fireEvent.change(screen.getByLabelText(/email address/i), {
-      target: { value: "lead@turingclub.org" },
+    fireEvent.change(screen.getByLabelText(/organiser handle/i), {
+      target: { value: "techlead@ttc" },
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "secret123" },
@@ -44,7 +44,7 @@ describe("OrganiserLogin Regression Tests", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email: "lead@turingclub.org",
+          username: "techlead@ttc",
           password: "secret123",
         }),
       });
@@ -57,13 +57,13 @@ describe("OrganiserLogin Regression Tests", () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: false,
       status: 401,
-      json: async () => ({ detail: "Invalid email or password" }),
+      json: async () => ({ detail: "Invalid username or password" }),
     });
 
     render(<OrganiserLogin onLoginSuccess={vi.fn()} />);
 
-    fireEvent.change(screen.getByLabelText(/email address/i), {
-      target: { value: "wrong@turingclub.org" },
+    fireEvent.change(screen.getByLabelText(/organiser handle/i), {
+      target: { value: "wrong@ttc" },
     });
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: "badpass" },
@@ -72,7 +72,7 @@ describe("OrganiserLogin Regression Tests", () => {
     fireEvent.click(screen.getByRole("button", { name: /continue/i }));
 
     await waitFor(() => {
-      expect(screen.getByRole("alert")).toHaveTextContent("Invalid email or password");
+      expect(screen.getByRole("alert")).toHaveTextContent("Invalid username or password");
     });
   });
 });

@@ -47,7 +47,7 @@ def _att(db, reg, event):
 
 def _org(db):
     o = Organiser(
-        email=f"org-{uuid.uuid4().hex[:8]}@example.com",
+        username=f"president-{uuid.uuid4().hex[:6]}@ttc",
         password_hash="x",
         name="Organiser",
     )
@@ -97,3 +97,4 @@ def test_list_scoped_to_event_id(db_session):
     rows_ev1 = crud.get_list(db_session, ev1.id)
     assert len(rows_ev1) == 1
     assert rows_ev1[0]["event_id"] == str(ev1.id)
+

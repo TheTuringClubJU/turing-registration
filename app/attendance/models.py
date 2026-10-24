@@ -43,7 +43,7 @@ class Organiser(Base):
     __tablename__ = "organisers"
 
     id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     name: Mapped[str] = mapped_column(String(200), nullable=False)
 
@@ -52,7 +52,7 @@ class Organiser(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Organiser {self.email}>"
+        return f"<Organiser {self.username}>"
 
 
 class Attendance(Base):
