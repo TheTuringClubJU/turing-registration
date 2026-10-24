@@ -1,13 +1,13 @@
 import { useState } from "react";
 
 function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
-  const [registrationId, setRegistrationId] = useState("");
+  const [ticketInput, setTicketInput] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const cleanId = registrationId.trim();
-    if (!cleanId) return;
+    const cleanCode = ticketInput.trim();
+    if (!cleanCode) return;
 
     setLoading(true);
 
@@ -18,7 +18,7 @@ function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ registration_id: cleanId }),
+        body: JSON.stringify({ registration_id: cleanCode }),
       });
 
       const data = await response.json();
@@ -26,7 +26,7 @@ function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
       if (!response.ok) {
         onCheckinComplete({
           type: "error",
-          message: data.detail || "Registration identifier not found",
+          message: data.detail || `Ticket '${cleanCode}' not found`,
         });
         return;
       }
@@ -34,16 +34,16 @@ function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
       if (data.status === "checked_in" && data.method !== "manual") {
         onCheckinComplete({
           type: "already_checked_in",
-          message: `This attendee was previously checked in via ${data.method ? data.method.toUpperCase() : "scanner"}.`,
+          message: `Ticket already checked in earlier via ${data.method ? data.method.toUpperCase() : "scanner"}.`,
           data,
         });
       } else {
         onCheckinComplete({
           type: "success",
-          message: "Check-in recorded successfully.",
+          message: `Ticket ${cleanCode.toUpperCase()} admitted successfully.`,
           data,
         });
-        setRegistrationId("");
+        setTicketInput("");
       }
     } catch (err) {
       onCheckinComplete({
@@ -60,23 +60,25 @@ function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
       <div style={styles.row}>
         <input
           type="text"
-          value={registrationId}
-          onChange={(e) => setRegistrationId(e.target.value)}
-          placeholder="Registration UUID"
+          value={ticketInput}
+          onChange={(e) => setTicketInput(e.target.value.toUpperCase())}
+          placeholder="Code (e.g. TTC-8K1M) or UUID"
           disabled={loading || disabled}
           style={styles.input}
-          aria-label="Registration ID"
+          aria-label="Ticket Code"
+          autoCapitalize="characters"
+          autoCorrect="off"
         />
         <button
           type="submit"
-          disabled={loading || disabled || !registrationId.trim()}
+          disabled={loading || disabled || !ticketInput.trim()}
           style={
-            loading || disabled || !registrationId.trim()
+            loading || disabled || !ticketInput.trim()
               ? { ...styles.button, opacity: 0.4, cursor: "not-allowed" }
               : styles.button
           }
         >
-          {loading ? "Checking in..." : "Check In"}
+          {loading ? "Checking..." : "Admit"}
         </button>
       </div>
     </form>
@@ -86,29 +88,36 @@ function ManualCheckinInput({ token, onCheckinComplete, disabled }) {
 const styles = {
   form: {
     width: "100%",
+    maxWidth: "500px",
+    margin: "0 auto",
   },
   row: {
     display: "flex",
-    gap: "10px",
+    gap: "8px",
+    width: "100%",
   },
   input: {
     flex: 1,
-    padding: "11px 14px",
+    minWidth: 0,
+    padding: "14px",
     backgroundColor: "#161617",
     border: "1px solid #2c2c2e",
-    borderRadius: "10px",
+    borderRadius: "12px",
     color: "#ffffff",
-    fontSize: "14px",
+    fontSize: "16px", // 16px prevents iOS Safari auto-zoom
     fontFamily: "ui-monospace, monospace",
+    letterSpacing: "1px",
+    fontWeight: "600",
     outline: "none",
+    boxSizing: "border-box",
   },
   button: {
-    padding: "11px 20px",
+    padding: "14px 20px",
     backgroundColor: "#ffffff",
     color: "#000000",
     border: "none",
-    borderRadius: "10px",
-    fontSize: "13px",
+    borderRadius: "12px",
+    fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
     whiteSpace: "nowrap",

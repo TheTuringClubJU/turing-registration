@@ -49,6 +49,7 @@ CREATE UNIQUE INDEX only_one_active_event
 CREATE TABLE registrations (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     event_id        UUID NOT NULL REFERENCES events(id),
+    ticket_code     VARCHAR(16) UNIQUE,
     team_name       VARCHAR(200),                  -- NULL forced server-side if max_team_size = 1
 
     p1_name         VARCHAR(200) NOT NULL,
@@ -101,7 +102,8 @@ CREATE TABLE organisers (
 CREATE TABLE attendance (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     registration_id UUID UNIQUE NOT NULL REFERENCES registrations(id),
-    event_id        UUID NOT NULL REFERENCES events(id),  -- denormalized for fast per-event dashboard queries
+    event_id        UUID NOT NULL REFERENCES events(id),
+    ticket_code     VARCHAR(16) UNIQUE,  -- denormalized for fast per-event dashboard queries
 
     status          attendance_status NOT NULL DEFAULT 'not_checked_in',
     method          checkin_method,          -- nullable until checked in
@@ -120,3 +122,4 @@ CREATE TABLE attendance (
 );
 
 CREATE INDEX idx_attendance_event_id ON attendance (event_id);
+

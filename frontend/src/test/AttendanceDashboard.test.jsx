@@ -17,6 +17,7 @@ describe("AttendanceDashboard Regression Tests", () => {
     const mockList = [
       {
         registration_id: "reg-001",
+        ticket_code: "TTC-8K1M",
         team_name: "Code Crafters",
         participant_names: ["Alice", "Bob"],
         status: "checked_in",
@@ -25,6 +26,7 @@ describe("AttendanceDashboard Regression Tests", () => {
       },
       {
         registration_id: "reg-002",
+        ticket_code: "TTC-4N2P",
         team_name: null,
         participant_names: ["Charlie"],
         status: "not_checked_in",
@@ -51,16 +53,16 @@ describe("AttendanceDashboard Regression Tests", () => {
 
     render(<AttendanceDashboard token="valid-token" onLogout={vi.fn()} />);
 
-    const eventInput = screen.getByPlaceholderText(/enter event uuid/i);
+    const eventInput = screen.getByPlaceholderText(/event uuid/i);
     fireEvent.change(eventInput, { target: { value: "event-123" } });
 
     await waitFor(() => {
       expect(screen.getByText("50")).toBeInTheDocument();
       expect(screen.getByText("20")).toBeInTheDocument();
       expect(screen.getByText("30")).toBeInTheDocument();
-      expect(screen.getByText("reg-001")).toBeInTheDocument();
-      expect(screen.getByText("reg-002")).toBeInTheDocument();
-      expect(screen.getByText(/Alice, Bob/i)).toBeInTheDocument();
+      expect(screen.getByText("TTC-8K1M")).toBeInTheDocument();
+      expect(screen.getByText("TTC-4N2P")).toBeInTheDocument();
+      expect(screen.getByText(/Alice • Bob/i)).toBeInTheDocument();
     });
   });
 
@@ -74,7 +76,7 @@ describe("AttendanceDashboard Regression Tests", () => {
 
     render(<AttendanceDashboard token="expired-token" onLogout={onLogout} />);
 
-    const eventInput = screen.getByPlaceholderText(/enter event uuid/i);
+    const eventInput = screen.getByPlaceholderText(/event uuid/i);
     fireEvent.change(eventInput, { target: { value: "event-123" } });
 
     await waitFor(() => {

@@ -9,6 +9,11 @@ its router.py (events, registrations, attendance).
 from fastapi import FastAPI
 from sqlalchemy import text
 
+# Import all models so SQLAlchemy resolves all cross-model relationship mappers
+import app.events.models  # noqa: F401
+import app.registrations.models  # noqa: F401
+import app.attendance.models  # noqa: F401
+
 from app.attendance.router import router as attendance_router
 from app.core.database import engine
 from app.core.security import router as auth_router

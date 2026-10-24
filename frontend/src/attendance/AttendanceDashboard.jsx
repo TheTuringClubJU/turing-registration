@@ -5,7 +5,7 @@ import ResultDisplay from "./ResultDisplay";
 
 function AttendanceDashboard({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState("scan");
-  const [eventId, setEventId] = useState("");
+  const [eventId, setEventId] = useState("d945986b-176c-4326-9b2e-5249c1356645");
   const [summary, setSummary] = useState(null);
   const [attendees, setAttendees] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -35,7 +35,7 @@ function AttendanceDashboard({ token, onLogout }) {
       }
 
       if (!sumRes.ok || !listRes.ok) {
-        throw new Error("Unable to retrieve event attendance records");
+        throw new Error("Unable to retrieve event records");
       }
 
       const sumData = await sumRes.json();
@@ -68,24 +68,25 @@ function AttendanceDashboard({ token, onLogout }) {
     if (!searchTerm.trim()) return true;
 
     const term = searchTerm.toLowerCase();
-    const idMatch = item.registration_id.toLowerCase().includes(term);
+    const codeMatch = item.ticket_code?.toLowerCase().includes(term);
+    const idMatch = item.registration_id?.toLowerCase().includes(term);
     const teamMatch = item.team_name?.toLowerCase().includes(term);
     const nameMatch = item.participant_names?.some((name) =>
       name.toLowerCase().includes(term)
     );
 
-    return idMatch || teamMatch || nameMatch;
+    return codeMatch || idMatch || teamMatch || nameMatch;
   });
 
   return (
     <div style={styles.page}>
-      {/* Apple-style clean minimal navbar */}
+      {/* Responsive Top Bar */}
       <nav style={styles.navBar}>
         <div style={styles.navInner}>
           <div style={styles.navBrand}>
-            <span style={styles.brandTitle}>Turing Check-in</span>
+            <span style={styles.brandTitle}>TTC Desk</span>
             <span style={styles.brandDivider}>/</span>
-            <span style={styles.brandSub}>Organiser Desk</span>
+            <span style={styles.brandSub}>Check-in</span>
           </div>
 
           <button onClick={onLogout} style={styles.signOutBtn}>
@@ -95,7 +96,7 @@ function AttendanceDashboard({ token, onLogout }) {
       </nav>
 
       <main style={styles.main}>
-        {/* Event Setup & Headline Metrics */}
+        {/* Mobile-Friendly Metrics Summary */}
         <section style={styles.section}>
           <div style={styles.eventRow}>
             <input
@@ -103,7 +104,7 @@ function AttendanceDashboard({ token, onLogout }) {
               type="text"
               value={eventId}
               onChange={(e) => setEventId(e.target.value)}
-              placeholder="Enter Event UUID to load records"
+              placeholder="Event UUID"
               style={styles.eventInput}
             />
             <button
@@ -111,7 +112,7 @@ function AttendanceDashboard({ token, onLogout }) {
               disabled={loading || !eventId.trim()}
               style={styles.refreshBtn}
             >
-              {loading ? "Refreshing" : "Refresh"}
+              {loading ? "..." : "Sync"}
             </button>
           </div>
 
@@ -120,22 +121,26 @@ function AttendanceDashboard({ token, onLogout }) {
           {summary && (
             <div style={styles.statsGrid}>
               <div style={styles.statCard}>
-                <span style={styles.statLabel}>Registered</span>
+                <span style={styles.statLabel}>Total</span>
                 <span style={styles.statNum}>{summary.total_registered}</span>
               </div>
               <div style={styles.statCard}>
-                <span style={styles.statLabel}>Checked in</span>
-                <span style={styles.statNum}>{summary.checked_in}</span>
+                <span style={styles.statLabel}>Admitted</span>
+                <span style={{ ...styles.statNum, color: "#ffffff" }}>
+                  {summary.checked_in}
+                </span>
               </div>
               <div style={styles.statCard}>
-                <span style={styles.statLabel}>Remaining</span>
-                <span style={styles.statNum}>{summary.remaining}</span>
+                <span style={styles.statLabel}>Pending</span>
+                <span style={{ ...styles.statNum, color: "#86868b" }}>
+                  {summary.remaining}
+                </span>
               </div>
             </div>
           )}
         </section>
 
-        {/* Check-in Module: Scanner & Manual */}
+        {/* Check-in Module: Segmented Switch */}
         <section style={styles.section}>
           <div style={styles.segmentedControl}>
             <button
@@ -145,7 +150,7 @@ function AttendanceDashboard({ token, onLogout }) {
                 ...(activeTab === "scan" ? styles.segmentBtnActive : {}),
               }}
             >
-              QR Scanner
+              Camera Scanner
             </button>
             <button
               onClick={() => setActiveTab("manual")}
@@ -154,7 +159,7 @@ function AttendanceDashboard({ token, onLogout }) {
                 ...(activeTab === "manual" ? styles.segmentBtnActive : {}),
               }}
             >
-              Manual Entry
+              Short Code (6-char)
             </button>
           </div>
 
@@ -180,9 +185,9 @@ function AttendanceDashboard({ token, onLogout }) {
           />
         </section>
 
-        {/* Registrations List */}
+        {/* Live Attendee Stream / Roster */}
         <section style={styles.section}>
-          <div style={styles.tableHeaderBar}>
+          <div style={styles.rosterHeader}>
             <div style={styles.filterPills}>
               <button
                 onClick={() => setFilter("all")}
@@ -194,13 +199,13 @@ function AttendanceDashboard({ token, onLogout }) {
                 onClick={() => setFilter("checked_in")}
                 style={filter === "checked_in" ? styles.pillActive : styles.pill}
               >
-                Checked In
+                Admitted ({attendees.filter(a => a.status === 'checked_in').length})
               </button>
               <button
                 onClick={() => setFilter("not_checked_in")}
                 style={filter === "not_checked_in" ? styles.pillActive : styles.pill}
               >
-                Remaining
+                Pending ({attendees.filter(a => a.status !== 'checked_in').length})
               </button>
             </div>
 
@@ -208,71 +213,64 @@ function AttendanceDashboard({ token, onLogout }) {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search registrant or team"
+              placeholder="Search by name, team, code..."
               style={styles.searchInput}
             />
           </div>
 
-          <div style={styles.tableWrapper}>
-            <table style={styles.table}>
-              <thead>
-                <tr>
-                  <th style={styles.th}>Registration</th>
-                  <th style={styles.th}>Participant / Team</th>
-                  <th style={styles.th}>Status</th>
-                  <th style={styles.th}>Method</th>
-                  <th style={styles.th}>Checked At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredAttendees.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} style={styles.emptyState}>
-                      {eventId
-                        ? "No matching records found."
-                        : "Enter an Event UUID above to display the attendee roster."}
-                    </td>
-                  </tr>
-                ) : (
-                  filteredAttendees.map((att) => (
-                    <tr key={att.registration_id} style={styles.tr}>
-                      <td style={styles.tdMono}>{att.registration_id}</td>
-                      <td style={styles.td}>
-                        {att.team_name ? (
-                          <span>
-                            <strong>{att.team_name}</strong> — {att.participant_names?.join(", ")}
-                          </span>
-                        ) : (
-                          <span>{att.participant_names?.join(", ") || "—"}</span>
-                        )}
-                      </td>
-                      <td style={styles.td}>
-                        <span
-                          style={
-                            att.status === "checked_in"
-                              ? styles.badgeChecked
-                              : styles.badgeUnchecked
-                          }
-                        >
-                          {att.status === "checked_in" ? "Checked in" : "Pending"}
+          <div style={styles.cardsContainer}>
+            {filteredAttendees.length === 0 ? (
+              <div style={styles.emptyState}>No attendee records found.</div>
+            ) : (
+              filteredAttendees.map((att) => (
+                <div key={att.registration_id} style={styles.attendeeCard}>
+                  <div style={styles.cardTop}>
+                    <div style={styles.badgeCluster}>
+                      <span style={styles.cardCode}>
+                        {att.ticket_code || att.registration_id.slice(0, 8)}
+                      </span>
+                      {att.team_name ? (
+                        <span style={styles.teamPill}>
+                          Team: {att.team_name}
                         </span>
-                      </td>
-                      <td style={styles.tdMethod}>
-                        {att.method ? att.method.toUpperCase() : "—"}
-                      </td>
-                      <td style={styles.tdTime}>
-                        {att.checked_in_at
-                          ? new Date(att.checked_in_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                      ) : (
+                        <span style={styles.soloPill}>Solo Attendee</span>
+                      )}
+                    </div>
+
+                    <span
+                      style={
+                        att.status === "checked_in"
+                          ? styles.badgeChecked
+                          : styles.badgeUnchecked
+                      }
+                    >
+                      {att.status === "checked_in" ? "✓ Admitted" : "• Pending"}
+                    </span>
+                  </div>
+
+                  {/* Prominent Attendee / Members Name Block */}
+                  <div style={styles.personBlock}>
+                    <span style={styles.personIcon}>👤</span>
+                    <span style={styles.cardName}>
+                      {att.participant_names && att.participant_names.length > 0
+                        ? att.participant_names.join(" • ")
+                        : "Registered Attendee"}
+                    </span>
+                  </div>
+
+                  {att.checked_in_at && (
+                    <div style={styles.cardMeta}>
+                      Method: {att.method?.toUpperCase()} • Checked in at{" "}
+                      {new Date(att.checked_in_at).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
           </div>
         </section>
       </main>
@@ -285,21 +283,21 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#000000",
     color: "#f5f5f7",
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', Helvetica, Arial, sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif",
     WebkitFontSmoothing: "antialiased",
   },
   navBar: {
     borderBottom: "1px solid #1d1d1f",
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    backgroundColor: "rgba(0, 0, 0, 0.85)",
     backdropFilter: "saturate(180%) blur(20px)",
     position: "sticky",
     top: 0,
     zIndex: 10,
   },
   navInner: {
-    maxWidth: "960px",
+    maxWidth: "800px",
     margin: "0 auto",
-    padding: "16px 24px",
+    padding: "12px 16px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
@@ -307,13 +305,12 @@ const styles = {
   navBrand: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
+    gap: "6px",
   },
   brandTitle: {
     fontSize: "15px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#ffffff",
-    letterSpacing: "-0.01em",
   },
   brandDivider: {
     color: "#424245",
@@ -328,41 +325,40 @@ const styles = {
     border: "none",
     fontSize: "13px",
     cursor: "pointer",
-    padding: "6px 10px",
-    borderRadius: "6px",
-    transition: "color 0.15s ease",
+    padding: "6px 8px",
   },
   main: {
-    maxWidth: "960px",
+    maxWidth: "800px",
     margin: "0 auto",
-    padding: "32px 24px",
+    padding: "16px 12px 32px",
     display: "flex",
     flexDirection: "column",
-    gap: "24px",
+    gap: "16px",
   },
   section: {
     backgroundColor: "#161617",
     border: "1px solid #242426",
     borderRadius: "16px",
-    padding: "24px",
+    padding: "16px",
   },
   eventRow: {
     display: "flex",
-    gap: "10px",
+    gap: "8px",
   },
   eventInput: {
     flex: 1,
-    padding: "12px 16px",
+    minWidth: 0,
+    padding: "10px 12px",
     backgroundColor: "#0a0a0a",
     border: "1px solid #2a2a2c",
     borderRadius: "10px",
     color: "#ffffff",
-    fontSize: "14px",
+    fontSize: "13px",
     fontFamily: "ui-monospace, monospace",
     outline: "none",
   },
   refreshBtn: {
-    padding: "12px 20px",
+    padding: "10px 16px",
     backgroundColor: "#2c2c2e",
     color: "#ffffff",
     border: "none",
@@ -372,49 +368,49 @@ const styles = {
     cursor: "pointer",
   },
   errorNotice: {
-    marginTop: "12px",
-    padding: "10px 14px",
+    marginTop: "10px",
+    padding: "8px 12px",
     backgroundColor: "#1c1c1e",
     border: "1px solid #3a3a3c",
     borderRadius: "8px",
-    fontSize: "13px",
-    color: "#f5f5f7",
+    fontSize: "12px",
   },
   statsGrid: {
     display: "grid",
     gridTemplateColumns: "repeat(3, 1fr)",
-    gap: "16px",
-    marginTop: "24px",
+    gap: "8px",
+    marginTop: "16px",
   },
   statCard: {
     backgroundColor: "#0a0a0a",
     border: "1px solid #222224",
-    borderRadius: "12px",
-    padding: "20px",
-    display: "flex",
-    flexDirection: "column",
-    gap: "4px",
+    borderRadius: "10px",
+    padding: "12px",
+    textAlign: "center",
   },
   statLabel: {
-    fontSize: "13px",
+    fontSize: "11px",
     color: "#86868b",
+    display: "block",
+    marginBottom: "2px",
   },
   statNum: {
-    fontSize: "32px",
-    fontWeight: "600",
+    fontSize: "24px",
+    fontWeight: "700",
     color: "#ffffff",
-    letterSpacing: "-0.02em",
   },
   segmentedControl: {
-    display: "inline-flex",
+    display: "flex",
     backgroundColor: "#0a0a0a",
     padding: "3px",
     borderRadius: "10px",
     border: "1px solid #222224",
-    marginBottom: "20px",
+    marginBottom: "16px",
+    width: "100%",
   },
   segmentBtn: {
-    padding: "8px 18px",
+    flex: 1,
+    padding: "10px",
     backgroundColor: "transparent",
     color: "#86868b",
     border: "none",
@@ -422,7 +418,7 @@ const styles = {
     fontSize: "13px",
     fontWeight: "500",
     cursor: "pointer",
-    transition: "all 0.15s ease",
+    textAlign: "center",
   },
   segmentBtnActive: {
     backgroundColor: "#242426",
@@ -432,103 +428,139 @@ const styles = {
   actionBody: {
     minHeight: "60px",
   },
-  tableHeaderBar: {
+  rosterHeader: {
     display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    gap: "12px",
-    flexWrap: "wrap",
-    marginBottom: "20px",
+    flexDirection: "column",
+    gap: "10px",
+    marginBottom: "16px",
   },
   filterPills: {
     display: "flex",
-    gap: "8px",
+    gap: "6px",
+    overflowX: "auto",
   },
   pill: {
+    flex: 1,
     backgroundColor: "#0a0a0a",
     border: "1px solid #222224",
     color: "#86868b",
-    padding: "6px 14px",
+    padding: "8px 10px",
     borderRadius: "8px",
     fontSize: "12px",
     cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   pillActive: {
+    flex: 1,
     backgroundColor: "#ffffff",
     border: "1px solid #ffffff",
     color: "#000000",
-    padding: "6px 14px",
+    padding: "8px 10px",
     borderRadius: "8px",
     fontSize: "12px",
     fontWeight: "600",
     cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   searchInput: {
-    padding: "8px 14px",
+    width: "100%",
+    padding: "12px 14px",
     backgroundColor: "#0a0a0a",
     border: "1px solid #2a2a2c",
-    borderRadius: "8px",
+    borderRadius: "10px",
     color: "#ffffff",
-    fontSize: "13px",
+    fontSize: "14px",
     outline: "none",
-    minWidth: "220px",
+    boxSizing: "border-box",
   },
-  tableWrapper: {
-    overflowX: "auto",
+  cardsContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
   },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: "13px",
+  attendeeCard: {
+    backgroundColor: "#0a0a0a",
+    border: "1px solid #222224",
+    borderRadius: "14px",
+    padding: "14px 16px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
   },
-  th: {
-    textAlign: "left",
-    padding: "12px 14px",
-    fontSize: "12px",
-    fontWeight: "500",
-    color: "#86868b",
-    borderBottom: "1px solid #242426",
+  cardTop: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "8px",
   },
-  tr: {
-    borderBottom: "1px solid #1c1c1e",
+  badgeCluster: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    flexWrap: "wrap",
   },
-  td: {
-    padding: "14px",
-    color: "#f5f5f7",
-  },
-  tdMono: {
-    padding: "14px",
-    color: "#a1a1a6",
+  cardCode: {
     fontFamily: "ui-monospace, monospace",
-    fontSize: "12px",
+    fontSize: "13px",
+    fontWeight: "700",
+    color: "#ffffff",
+    letterSpacing: "0.5px",
+    backgroundColor: "#1c1c1e",
+    border: "1px solid #2c2c2e",
+    padding: "3px 8px",
+    borderRadius: "6px",
   },
-  tdMethod: {
-    padding: "14px",
-    color: "#86868b",
+  teamPill: {
     fontSize: "12px",
+    fontWeight: "600",
+    color: "#a1a1a6",
+    backgroundColor: "#1c1c1e",
+    padding: "3px 8px",
+    borderRadius: "6px",
   },
-  tdTime: {
-    padding: "14px",
-    color: "#86868b",
+  soloPill: {
     fontSize: "12px",
+    color: "#6e6e73",
+  },
+  personBlock: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    marginTop: "2px",
+  },
+  personIcon: {
+    fontSize: "14px",
+    opacity: 0.8,
+  },
+  cardName: {
+    fontSize: "15px",
+    fontWeight: "600",
+    color: "#ffffff",
+    letterSpacing: "-0.01em",
+  },
+  cardMeta: {
+    fontSize: "12px",
+    color: "#6e6e73",
+    marginTop: "2px",
   },
   badgeChecked: {
     backgroundColor: "#ffffff",
     color: "#000000",
-    padding: "4px 8px",
+    padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",
-    fontWeight: "600",
+    fontWeight: "700",
   },
   badgeUnchecked: {
     backgroundColor: "#242426",
     color: "#86868b",
-    padding: "4px 8px",
+    padding: "3px 8px",
     borderRadius: "6px",
     fontSize: "11px",
   },
   emptyState: {
-    padding: "36px",
+    padding: "24px",
     textAlign: "center",
     color: "#6e6e73",
     fontSize: "13px",

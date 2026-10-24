@@ -8,12 +8,14 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app.attendance import crud, qr
 from app.attendance.models import CheckinMethod, Organiser
 from app.attendance.schemas import AttendanceOut, CheckinRequest, SummaryOut
 from app.core.database import get_db
 from app.core.security import require_valid_organiser
+from app.registrations.models import Registration
 
 router = APIRouter(prefix="/attendance", tags=["attendance"])
 
@@ -24,16 +26,29 @@ router = APIRouter(prefix="/attendance", tags=["attendance"])
 
 
 def _checkin(
-    registration_id: UUID,
+    identifier: str,
     method: CheckinMethod,
     db: Session,
     organiser: Organiser,
 ) -> AttendanceOut:
     try:
-        attendance = crud.mark_attended(db, registration_id, method, organiser.id)
+        attendance = crud.mark_attended(db, identifier, method, organiser.id)
     except LookupError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
-    return attendance
+
+    # Enrich with participant & team name for the response display
+    reg = db.scalar(select(Registration).where(Registration.id == attendance.registration_id))
+
+    return AttendanceOut(
+        registration_id=attendance.registration_id,
+        ticket_code=getattr(reg, "ticket_code", None) if reg else None,
+        participant_name=getattr(reg, "p1_name", "") if reg else "",
+        team_name=getattr(reg, "team_name", None) if reg else None,
+        status=attendance.status,
+        method=attendance.method,
+        checked_in_at=attendance.checked_in_at,
+        checked_in_by=attendance.checked_in_by,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -47,8 +62,8 @@ def scan(
     db: Session = Depends(get_db),
     organiser: Organiser = Depends(require_valid_organiser),
 ):
-    """QR scan check-in — method=qr."""
-    return _checkin(payload.registration_id, CheckinMethod.qr, db, organiser)
+    """QR scan check-in — accepts raw UUID or ticket_code."""
+    return _checkin(payload.query, CheckinMethod.qr, db, organiser)
 
 
 @router.post("/manual-checkin", response_model=AttendanceOut)
@@ -57,8 +72,8 @@ def manual_checkin(
     db: Session = Depends(get_db),
     organiser: Organiser = Depends(require_valid_organiser),
 ):
-    """Manual check-in — method=manual."""
-    return _checkin(payload.registration_id, CheckinMethod.manual, db, organiser)
+    """Manual check-in — accepts short ticket_code (e.g. TTC-7K9X) or raw UUID."""
+    return _checkin(payload.query, CheckinMethod.manual, db, organiser)
 
 
 @router.get("/summary", response_model=SummaryOut)

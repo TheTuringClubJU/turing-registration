@@ -7,7 +7,7 @@ describe("ManualCheckinInput Regression Tests", () => {
     vi.restoreAllMocks();
   });
 
-  it("renders text input and submits registration ID to /attendance/manual-checkin", async () => {
+  it("renders text input and submits ticket code to /attendance/manual-checkin", async () => {
     const onCheckinComplete = vi.fn();
     const token = "mock-token";
 
@@ -15,6 +15,7 @@ describe("ManualCheckinInput Regression Tests", () => {
       ok: true,
       json: async () => ({
         registration_id: "c2534f3b-01c5-4a57-b08e-17cfc704f056",
+        ticket_code: "TTC-8K1M",
         status: "checked_in",
         method: "manual",
         checked_in_at: "2026-10-24T12:00:00Z",
@@ -29,12 +30,12 @@ describe("ManualCheckinInput Regression Tests", () => {
       />
     );
 
-    const input = screen.getByLabelText(/registration id/i);
+    const input = screen.getByLabelText(/ticket code/i);
     fireEvent.change(input, {
-      target: { value: "c2534f3b-01c5-4a57-b08e-17cfc704f056" },
+      target: { value: "TTC-8K1M" },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: /check in/i }));
+    fireEvent.click(screen.getByRole("button", { name: /admit/i }));
 
     await waitFor(() => {
       expect(global.fetch).toHaveBeenCalledWith("/attendance/manual-checkin", {
@@ -44,7 +45,7 @@ describe("ManualCheckinInput Regression Tests", () => {
           Authorization: `Bearer mock-token`,
         },
         body: JSON.stringify({
-          registration_id: "c2534f3b-01c5-4a57-b08e-17cfc704f056",
+          registration_id: "TTC-8K1M",
         }),
       });
       expect(onCheckinComplete).toHaveBeenCalledWith(
@@ -72,9 +73,9 @@ describe("ManualCheckinInput Regression Tests", () => {
       />
     );
 
-    const input = screen.getByLabelText(/registration id/i);
-    fireEvent.change(input, { target: { value: "invalid-uuid" } });
-    fireEvent.click(screen.getByRole("button", { name: /check in/i }));
+    const input = screen.getByLabelText(/ticket code/i);
+    fireEvent.change(input, { target: { value: "TTC-FAKE" } });
+    fireEvent.click(screen.getByRole("button", { name: /admit/i }));
 
     await waitFor(() => {
       expect(onCheckinComplete).toHaveBeenCalledWith(

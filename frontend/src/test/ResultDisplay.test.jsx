@@ -8,12 +8,15 @@ describe("ResultDisplay Component Tests", () => {
     expect(container.firstChild).toBeNull();
   });
 
-  it("renders success state correctly", () => {
+  it("renders success state and participant details correctly", () => {
     const mockResult = {
       type: "success",
       message: "Check-in successful!",
       data: {
         registration_id: "test-reg-id",
+        ticket_code: "TTC-8K1M",
+        participant_name: "Aarav Sharma",
+        team_name: "Byte Bandits",
         method: "qr",
         checked_in_at: "2026-10-24T10:00:00Z",
       },
@@ -22,8 +25,9 @@ describe("ResultDisplay Component Tests", () => {
     render(<ResultDisplay result={mockResult} onClear={vi.fn()} />);
 
     expect(screen.getByText("Checked in")).toBeInTheDocument();
-    expect(screen.getByText("Check-in successful!")).toBeInTheDocument();
-    expect(screen.getByText("test-reg-id")).toBeInTheDocument();
+    expect(screen.getByText("Aarav Sharma")).toBeInTheDocument();
+    expect(screen.getByText(/Byte Bandits/i)).toBeInTheDocument();
+    expect(screen.getByText("TTC-8K1M")).toBeInTheDocument();
     expect(screen.getByText(/QR/i)).toBeInTheDocument();
   });
 
@@ -33,13 +37,15 @@ describe("ResultDisplay Component Tests", () => {
       message: "Attendee was already checked in via QR.",
       data: {
         registration_id: "duplicate-reg-id",
+        ticket_code: "TTC-DUP1",
+        participant_name: "Kabir Patel",
         method: "qr",
       },
     };
 
     render(<ResultDisplay result={mockResult} />);
     expect(screen.getByText("Already checked in")).toBeInTheDocument();
-    expect(screen.getByText("Attendee was already checked in via QR.")).toBeInTheDocument();
+    expect(screen.getByText("Kabir Patel")).toBeInTheDocument();
   });
 
   it("calls onClear when close button is clicked", () => {

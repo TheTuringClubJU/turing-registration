@@ -4,6 +4,11 @@ function ResultDisplay({ result, onClear }) {
   const isSuccess = result.type === "success";
   const isAlreadyCheckedIn = result.type === "already_checked_in";
 
+  const data = result.data || {};
+  const displayName = data.participant_name || "";
+  const displayTeam = data.team_name ? `Team: ${data.team_name}` : "";
+  const displayCode = data.ticket_code || (data.registration_id ? String(data.registration_id).slice(0, 8) : "");
+
   return (
     <div role="status" style={styles.card}>
       <div style={styles.header}>
@@ -24,25 +29,34 @@ function ResultDisplay({ result, onClear }) {
         )}
       </div>
 
+      {displayName && (
+        <div style={styles.nameBlock}>
+          <div style={styles.name}>{displayName}</div>
+          {displayTeam && <div style={styles.team}>{displayTeam}</div>}
+        </div>
+      )}
+
       <p style={styles.message}>{result.message}</p>
 
       {result.data && (
         <div style={styles.metaBox}>
-          <div style={styles.metaRow}>
-            <span style={styles.metaLabel}>ID</span>
-            <span style={styles.metaVal}>{result.data.registration_id}</span>
-          </div>
-          {result.data.method && (
+          {displayCode && (
             <div style={styles.metaRow}>
-              <span style={styles.metaLabel}>Method</span>
-              <span style={styles.metaVal}>{result.data.method.toUpperCase()}</span>
+              <span style={styles.metaLabel}>Ticket / Code</span>
+              <span style={styles.metaCode}>{displayCode}</span>
             </div>
           )}
-          {result.data.checked_in_at && (
+          {data.method && (
+            <div style={styles.metaRow}>
+              <span style={styles.metaLabel}>Method</span>
+              <span style={styles.metaVal}>{data.method.toUpperCase()}</span>
+            </div>
+          )}
+          {data.checked_in_at && (
             <div style={styles.metaRow}>
               <span style={styles.metaLabel}>Timestamp</span>
               <span style={styles.metaVal}>
-                {new Date(result.data.checked_in_at).toLocaleTimeString([], {
+                {new Date(data.checked_in_at).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                   second: "2-digit",
@@ -60,7 +74,7 @@ const styles = {
   card: {
     backgroundColor: "#161617",
     border: "1px solid #2c2c2e",
-    borderRadius: "12px",
+    borderRadius: "14px",
     padding: "16px 18px",
     marginTop: "16px",
     marginBottom: "8px",
@@ -70,7 +84,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "6px",
+    marginBottom: "10px",
   },
   statusRow: {
     display: "flex",
@@ -83,7 +97,7 @@ const styles = {
   },
   title: {
     fontSize: "14px",
-    fontWeight: "600",
+    fontWeight: "700",
     color: "#ffffff",
     letterSpacing: "-0.01em",
   },
@@ -94,6 +108,23 @@ const styles = {
     fontSize: "12px",
     cursor: "pointer",
     padding: "2px 6px",
+  },
+  nameBlock: {
+    backgroundColor: "#000",
+    padding: "10px 14px",
+    borderRadius: "10px",
+    border: "1px solid #242426",
+    marginBottom: "10px",
+  },
+  name: {
+    fontSize: "16px",
+    fontWeight: "700",
+    color: "#ffffff",
+  },
+  team: {
+    fontSize: "12px",
+    color: "#86868b",
+    marginTop: "2px",
   },
   message: {
     margin: "0 0 12px 0",
@@ -119,6 +150,12 @@ const styles = {
   metaVal: {
     color: "#f5f5f7",
     fontFamily: "ui-monospace, monospace",
+  },
+  metaCode: {
+    color: "#ffffff",
+    fontWeight: "700",
+    fontFamily: "ui-monospace, monospace",
+    letterSpacing: "0.5px",
   },
 };
 

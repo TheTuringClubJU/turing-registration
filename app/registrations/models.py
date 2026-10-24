@@ -41,6 +41,7 @@ class Registration(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     event_id = Column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
+    ticket_code = Column(String(16), unique=True, nullable=True)
 
     team_name = Column(String(200), nullable=True)  # forced NULL server-side if max_team_size = 1
 
