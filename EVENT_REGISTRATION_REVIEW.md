@@ -46,6 +46,17 @@ Local validation uses dummy settings and blocks SQLAlchemy engine connections:
 run. All 26 frontend tests and the production build pass. Full SQL validation
 is performed by the official branch CI, not that local offline run.
 
+The first official push (`e5cfff0`) passed the unchanged CI workflow:
+[run 40098011071](https://github.com/TheTuringClubJU/turing-registration/actions/runs/40098011071).
+All **149 backend tests passed**, with no skips, against its PostgreSQL 16
+container, and all **26 frontend tests** and the production build passed.
+This includes the new concurrent registration and login/registration/check-in
+integration tests as well as the original attendance regression suite.
+Browser checks with mocked event/submission responses verified the form at
+390px and 1440px widths, no horizontal overflow, optional-slot omission,
+successful confirmation, and the preserved root organiser login page.
+No local or production database was accessed; no real email was sent.
+
 To review locally:
 
 ```sh

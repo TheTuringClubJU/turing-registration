@@ -1,3 +1,4 @@
+body:has(.registration-page) { margin: 0; }
 .registration-page {
   color-scheme: dark;
   font-family: system-ui, sans-serif;
@@ -14,7 +15,7 @@
 .registration-page p { overflow-wrap: anywhere; }
 .registration-page form { margin-top: 32px; }
 .registration-page form > fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
-.registration-page fieldset fieldset, .registration-page fieldset > div {
+.registration-page fieldset fieldset, .registration-page form > fieldset > div {
   min-width: 0; margin: 24px 0; border: 1px solid #364152; border-radius: 12px; padding: 20px; background: #151c28;
 }
 .registration-page legend { padding: 0 8px; font-weight: 600; }
