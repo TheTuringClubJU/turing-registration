@@ -3,6 +3,7 @@ import CheckinAnimation from "./CheckinAnimation";
 import ManualCheckinInput from "./ManualCheckinInput";
 import QRScanner from "./QRScanner";
 import ResultDisplay from "./ResultDisplay";
+import CreateEventModal from "./CreateEventModal";
 
 function AttendanceDashboard({ token, onLogout }) {
   const [activeTab, setActiveTab] = useState("scan");
@@ -16,6 +17,7 @@ function AttendanceDashboard({ token, onLogout }) {
   const [animationData, setAnimationData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const fetchDashboardData = useCallback(async () => {
     if (!eventId.trim()) return;
@@ -85,6 +87,14 @@ function AttendanceDashboard({ token, onLogout }) {
     }
   }, [eventId, fetchDashboardData]);
 
+  const handleEventCreated = (newEvent) => {
+    if (newEvent?.id) {
+      setEventId(newEvent.id);
+      setEventName(newEvent.name || "");
+      localStorage.setItem("active_event_id", newEvent.id);
+    }
+  };
+
   const handleCheckinComplete = (result) => {
     setLastResult(result);
 
@@ -129,6 +139,14 @@ function AttendanceDashboard({ token, onLogout }) {
         />
       )}
 
+      {/* Organizer Create Event Modal */}
+      <CreateEventModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        token={token}
+        onEventCreated={handleEventCreated}
+      />
+
       {/* Responsive Top Bar */}
       <nav style={styles.navBar}>
         <div style={styles.navInner}>
@@ -138,9 +156,17 @@ function AttendanceDashboard({ token, onLogout }) {
             <span style={styles.brandSub}>Check-in</span>
           </div>
 
-          <button onClick={onLogout} style={styles.signOutBtn}>
-            Sign Out
-          </button>
+          <div style={styles.navActions}>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              style={styles.createEventBtn}
+            >
+              + Create Event
+            </button>
+            <button onClick={onLogout} style={styles.signOutBtn}>
+              Sign Out
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -370,6 +396,22 @@ const styles = {
   brandSub: {
     fontSize: "13px",
     color: "#86868b",
+  },
+  navActions: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+  },
+  createEventBtn: {
+    backgroundColor: "#ffffff",
+    color: "#000000",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "12px",
+    fontWeight: "600",
+    cursor: "pointer",
+    padding: "6px 12px",
+    transition: "opacity 0.15s ease",
   },
   signOutBtn: {
     backgroundColor: "transparent",
