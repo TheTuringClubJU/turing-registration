@@ -1,12 +1,24 @@
 {
   "rewrites": [
     {
+      "source": "/events",
+      "destination": "https://turing-registration-api.onrender.com/events"
+    },
+    {
       "source": "/events/:match*",
       "destination": "https://turing-registration-api.onrender.com/events/:match*"
     },
     {
+      "source": "/auth",
+      "destination": "https://turing-registration-api.onrender.com/auth"
+    },
+    {
       "source": "/auth/:match*",
       "destination": "https://turing-registration-api.onrender.com/auth/:match*"
+    },
+    {
+      "source": "/attendance",
+      "destination": "https://turing-registration-api.onrender.com/attendance"
     },
     {
       "source": "/attendance/:match*",

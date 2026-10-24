@@ -73,7 +73,10 @@ export default function CreateEventModal({ isOpen, onClose, token, onEventCreate
         throw new Error("Session expired. Please sign out and sign in again.");
       }
 
-      const res = await fetch("/events", {
+      const apiBase = (import.meta.env.VITE_REGISTRATION_API_URL || "").replace(/\/$/, "");
+      const endpoint = `${apiBase}/events`;
+
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
