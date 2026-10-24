@@ -68,11 +68,16 @@ export default function CreateEventModal({ isOpen, onClose, token, onEventCreate
         reg_close_at: regCloseAt ? new Date(regCloseAt).toISOString() : null,
       };
 
+      const authToken = (token || localStorage.getItem("organiser_token") || "").trim();
+      if (!authToken) {
+        throw new Error("Session expired. Please sign out and sign in again.");
+      }
+
       const res = await fetch("/events", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify(payload),
       });
