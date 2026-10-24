@@ -5,7 +5,7 @@ Transactional email delivery using Brevo (formerly Sendinblue) REST API.
 Sends event registration confirmation emails with:
 - Apple monochrome minimalist styling
 - High-contrast short ticket code pill (TTC-XXXX)
-- Inline attached QR code badge (CID embedded)
+- Universal QR code rendering (embedded base64 data URI + standard attachment)
 - Attendee roster (team lead and members)
 - Check-in instructions
 """
@@ -32,10 +32,10 @@ def render_confirmation_html(
     participants: list[dict[str, Any]],
     registration_id: str,
     ticket_code: str | None,
+    qr_b64: str,
 ) -> str:
     """Build responsive Apple-monochrome HTML email template."""
     event_name = event.get("name", "TTC Event")
-    event_code = event.get("event_code", "")
 
     # Participant roster rows
     participant_items = []
@@ -55,6 +55,8 @@ def render_confirmation_html(
 
     ticket_code_display = ticket_code or "TTC-PASS"
     team_display_html = f'<p style="margin:0 0 16px 0;color:#86868b;font-size:13px;">Team: <strong style="color:#ffffff;">{team_name}</strong></p>' if team_name else ''
+
+    qr_image_src = f"data:image/png;base64,{qr_b64}"
 
     return f"""<!DOCTYPE html>
 <html>
@@ -83,9 +85,9 @@ def render_confirmation_html(
             <td style="padding:28px 28px 20px 28px;text-align:center;">
               <div style="background-color:#0d0d0d;border:1px solid #262628;border-radius:16px;padding:24px;display:inline-block;width:100%;box-sizing:border-box;">
                 
-                <!-- QR Code (CID linked) -->
+                <!-- QR Code (data:image/png;base64) -->
                 <div style="margin-bottom:18px;">
-                  <img src="cid:qrcode.png" alt="Registration QR Code" width="180" height="180" style="display:inline-block;border-radius:12px;background-color:#ffffff;padding:8px;" />
+                  <img src="{qr_image_src}" alt="Registration QR Code" width="180" height="180" style="display:inline-block;border-radius:12px;background-color:#ffffff;padding:8px;" />
                 </div>
 
                 <!-- Ticket Code Pill -->
@@ -151,7 +153,8 @@ def send_registration_confirmation(
 ) -> None:
     """
     Sends the confirmation email via Brevo transactional API.
-    Attaches the QR PNG inline with Content-ID (CID) for instant rendering.
+    Uses embedded data:image/png;base64 for universal rendering across all web & mobile clients,
+    plus an attachment backup for desktop clients.
     """
     api_key = getattr(settings, "BREVO_API_KEY", "").strip()
     if not api_key:
@@ -163,15 +166,16 @@ def send_registration_confirmation(
     if ticket_code:
         ticket_subject += f" — {ticket_code}"
 
+    qr_b64 = base64.b64encode(qr_bytes).decode("ascii")
+
     html_content = render_confirmation_html(
         event=event,
         team_name=team_name,
         participants=participants,
         registration_id=registration_id,
         ticket_code=ticket_code,
+        qr_b64=qr_b64,
     )
-
-    qr_b64 = base64.b64encode(qr_bytes).decode("ascii")
 
     payload = {
         "sender": {
@@ -185,9 +189,9 @@ def send_registration_confirmation(
         ],
         "subject": ticket_subject,
         "htmlContent": html_content,
-        "inlineImage": [
+        "attachment": [
             {
-                "name": "qrcode.png",
+                "name": f"ticket-qr-{ticket_code or 'pass'}.png",
                 "content": qr_b64,
             }
         ],
