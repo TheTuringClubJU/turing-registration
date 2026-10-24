@@ -35,6 +35,7 @@ def _send_confirmation_background(
     team_name: str | None,
     participants_dict: list[dict[str, Any]],
     registration_id_str: str,
+    ticket_code: str | None = None,
 ) -> None:
     """
     Background worker: generates QR PNG and sends confirmation email.
@@ -48,6 +49,7 @@ def _send_confirmation_background(
         if generate_image is None or send_confirmation is None:
             logger.warning("Confirmation pending: QR/email provider has not been integrated.")
             return
+        # Encode registration_id_str for backwards-compatible verification with attendance QR endpoint
         qr_bytes = generate_image(registration_id_str)
         send_confirmation(
             to=to_email,
@@ -122,6 +124,7 @@ def register_for_event(
         team_name=registration.team_name,
         participants_dict=participants_dict,
         registration_id_str=str(registration.id),
+        ticket_code=getattr(registration, "ticket_code", None),
     )
 
     return RegistrationOut.model_validate(registration)

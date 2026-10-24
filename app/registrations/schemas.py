@@ -31,5 +31,6 @@ class RegistrationOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: UUID
+    ticket_code: str | None = None
     status: Literal["registered", "cancelled"]
     created_at: datetime

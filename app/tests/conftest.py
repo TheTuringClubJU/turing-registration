@@ -36,6 +36,14 @@ def db_session():
     # boundaries inside the test's outer transaction, including error paths.
     session = TestSessionLocal(bind=connection, join_transaction_mode="create_savepoint")
 
+    # In local/shared database environments with an active production event,
+    # temporarily deactivate any pre-existing active events within this test transaction
+    # so tests start with a clean state and do not violate the only_one_active_event constraint.
+    # The outer transaction rollback will restore the original state.
+    from app.events.models import Event
+    session.query(Event).filter(Event.is_active == True).update({"is_active": False})
+    session.flush()
+
     try:
         yield session
     finally:

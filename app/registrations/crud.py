@@ -8,6 +8,8 @@ concurrent email uniqueness checks.
 """
 
 import logging
+import random
+import string
 from uuid import UUID
 
 from sqlalchemy import select
@@ -21,6 +23,16 @@ from app.registrations.schemas import RegistrationCreate
 from app.registrations.validators import validate_registration
 
 logger = logging.getLogger(__name__)
+
+def generate_unique_ticket_code(db: Session) -> str:
+    chars = "".join(c for c in string.ascii_uppercase + string.digits if c not in "IO01")
+    for _ in range(10):
+        code = "TTC-" + "".join(random.choices(chars, k=4))
+        existing = db.scalar(select(Registration.id).where(Registration.ticket_code == code))
+        if not existing:
+            return code
+    return "TTC-" + "".join(random.choices(chars, k=6))
+
 
 
 class EventNotFoundError(Exception):
@@ -105,8 +117,11 @@ def create_registration(
                 slots_kwargs[f"p{i}_phone"] = None
                 slots_kwargs[f"p{i}_is_lead"] = False
 
+        ticket_code = generate_unique_ticket_code(db)
+
         registration = Registration(
             event_id=event.id,
+            ticket_code=ticket_code,
             team_name=normalized.team_name,
             status=RegistrationStatus.registered,
             **slots_kwargs,
