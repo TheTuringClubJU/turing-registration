@@ -1,16 +1,22 @@
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
+
 from pydantic import BaseModel, Field
 
+from app.attendance.models import AttendanceStatus, CheckinMethod
+
+
 class CheckinRequest(BaseModel):
-    registration_id: str = Field(..., description="The unique registration ID of the attendee")
+    registration_id: UUID = Field(..., description="The unique registration ID of the attendee")
 
 
 class AttendanceOut(BaseModel):
-    status: str = Field(..., description="Check-in status (e.g., 'success', 'already_checked_in')")
-    method: str = Field(..., description="Check-in method used (e.g., 'qr', 'manual')")
-    checked_in_at: datetime = Field(..., description="Timestamp when the check-in occurred")
-    checked_in_by: Optional[str] = Field(None, description="Identifier of the organiser who performed the check-in")
+    registration_id: UUID = Field(..., description="The registration this attendance record belongs to")
+    status: AttendanceStatus = Field(..., description="Check-in status")
+    method: Optional[CheckinMethod] = Field(None, description="Check-in method (qr or manual)")
+    checked_in_at: Optional[datetime] = Field(None, description="Timestamp when the check-in occurred")
+    checked_in_by: Optional[UUID] = Field(None, description="UUID of the organiser who performed the check-in")
 
     class Config:
         from_attributes = True

@@ -8,13 +8,18 @@ Note: duplicate-email prevention across p1-p4 for the same event_id, and
 "exactly one is_lead = true", are NOT expressible as DB constraints across
 four slot-pairs — those are enforced in app code (registrations/crud.py +
 registrations/validators.py), not here.
+
+Uses Mapped / mapped_column so Pylance resolves instance attribute types
+correctly (avoids Column[X] vs X confusion).
 """
 
 import uuid
 import enum
+from datetime import datetime
+from typing import Optional
+from uuid import UUID as PyUUID
 
 from sqlalchemy import (
-    Column,
     String,
     Boolean,
     DateTime,
@@ -24,7 +29,7 @@ from sqlalchemy import (
     func,
 )
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
@@ -39,48 +44,50 @@ class RegistrationStatus(str, enum.Enum):
 class Registration(Base):
     __tablename__ = "registrations"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    event_id = Column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
+    id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    event_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("events.id"), nullable=False)
 
-    team_name = Column(String(200), nullable=True)  # forced NULL server-side if max_team_size = 1
+    team_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)  # forced NULL server-side if max_team_size = 1
 
     # Slot 1 — team lead, or the solo registrant. Always required.
-    p1_name = Column(String(200), nullable=False)
-    p1_email = Column(String(320), nullable=False)
-    p1_phone = Column(String(20), nullable=False)
-    p1_is_lead = Column(Boolean, nullable=False, default=True)
+    p1_name: Mapped[str] = mapped_column(String(200), nullable=False)
+    p1_email: Mapped[str] = mapped_column(String(320), nullable=False)
+    p1_phone: Mapped[str] = mapped_column(String(20), nullable=False)
+    p1_is_lead: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     # Slots 2-4 — nullable, filled up to max_team_size, required up to min_team_size
-    p2_name = Column(String(200), nullable=True)
-    p2_email = Column(String(320), nullable=True)
-    p2_phone = Column(String(20), nullable=True)
-    p2_is_lead = Column(Boolean, nullable=False, default=False)
+    p2_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    p2_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    p2_phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    p2_is_lead: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    p3_name = Column(String(200), nullable=True)
-    p3_email = Column(String(320), nullable=True)
-    p3_phone = Column(String(20), nullable=True)
-    p3_is_lead = Column(Boolean, nullable=False, default=False)
+    p3_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    p3_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    p3_phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    p3_is_lead: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    p4_name = Column(String(200), nullable=True)
-    p4_email = Column(String(320), nullable=True)
-    p4_phone = Column(String(20), nullable=True)
-    p4_is_lead = Column(Boolean, nullable=False, default=False)
+    p4_name: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
+    p4_email: Mapped[Optional[str]] = mapped_column(String(320), nullable=True)
+    p4_phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    p4_is_lead: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
-    status = Column(
+    status: Mapped[RegistrationStatus] = mapped_column(
         Enum(RegistrationStatus, name="registration_status"),
         nullable=False,
         default=RegistrationStatus.registered,
     )
 
-    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
-    updated_at = Column(
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=func.now(),
         onupdate=func.now(),
     )
 
-    event = relationship("Event", backref="registrations")
+    event: Mapped[Optional["Event"]] = relationship("Event", backref="registrations")  # type: ignore[name-defined]
 
     __table_args__ = (
         Index("idx_registrations_event_id", "event_id"),
