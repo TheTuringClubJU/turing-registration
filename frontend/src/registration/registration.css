@@ -1,0 +1,41 @@
+.registration-page {
+  color-scheme: dark;
+  font-family: system-ui, sans-serif;
+  color: #edf2f7;
+  background: #0c1018;
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: clamp(20px, 5vw, 64px);
+  line-height: 1.6;
+}
+.registration-page *, .registration-page *::before, .registration-page *::after { box-sizing: border-box; }
+.registration-page > section, .registration-page > div, .registration-page > p { max-width: 760px; margin: auto; }
+.registration-page h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.2; overflow-wrap: anywhere; }
+.registration-page p { overflow-wrap: anywhere; }
+.registration-page form { margin-top: 32px; }
+.registration-page form > fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+.registration-page fieldset fieldset, .registration-page fieldset > div {
+  min-width: 0; margin: 24px 0; border: 1px solid #364152; border-radius: 12px; padding: 20px; background: #151c28;
+}
+.registration-page legend { padding: 0 8px; font-weight: 600; }
+.registration-page legend span { color: #b7c4d8; font-size: .85rem; font-weight: 400; }
+.registration-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.registration-full-width { grid-column: 1 / -1; }
+.registration-input {
+  display: block; width: 100%; min-width: 0; margin-top: 8px; border: 1px solid #536178;
+  background: #0c1018; color: inherit; border-radius: 8px; padding: 12px; font: inherit;
+}
+.registration-page :focus-visible { outline: 3px solid #82b8ff; outline-offset: 3px; }
+.registration-page [aria-invalid="true"] { border-color: #ff9999; }
+.registration-page [id$="-error"], .registration-page [role="alert"] { color: #ffb2b2; }
+.registration-page [id$="-hint"] { font-size: .8rem; color: #b7c4d8; }
+.registration-page button {
+  font: inherit; font-weight: 600; color: white; background: #2357be; border: 1px solid #82b8ff;
+  border-radius: 8px; padding: 12px 20px; cursor: pointer;
+}
+.registration-page button:disabled { opacity: .55; cursor: not-allowed; }
+.registration-page a { color: #9ec9ff; }
+@media (max-width: 540px) {
+  .registration-fields { grid-template-columns: 1fr; }
+  .registration-page button { width: 100%; }
+}

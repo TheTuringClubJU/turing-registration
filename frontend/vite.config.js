@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       '/auth': 'http://127.0.0.1:8000',
       '/attendance': 'http://127.0.0.1:8000',
+      '/events': 'http://127.0.0.1:8000',
     },
   },
   test: {

@@ -32,10 +32,74 @@ def db_session():
     """
     connection = test_engine.connect()
     transaction = connection.begin()
-    session = TestSessionLocal(bind=connection)
+    # Application CRUD calls commit/rollback itself. SAVEPOINTs keep those
+    # boundaries inside the test's outer transaction, including error paths.
+    session = TestSessionLocal(bind=connection, join_transaction_mode="create_savepoint")
 
-    yield session
+    try:
+        yield session
+    finally:
+        session.close()
+        if transaction.is_active:
+            transaction.rollback()
+        connection.close()
 
-    session.close()
-    transaction.rollback()
-    connection.close()
+
+@pytest.fixture(name="test_engine")
+def committed_test_engine():
+    """Independent connections are only allowed in the disposable CI service."""
+    import os
+    from sqlalchemy.engine import make_url
+
+    url = make_url(settings.DATABASE_URL)
+    if (os.environ.get("GITHUB_ACTIONS") != "true"
+            or url.host not in {"localhost", "127.0.0.1"}
+            or url.database != "turing_registration_test"):
+        pytest.skip("Committed concurrency checks require the isolated GitHub Actions database")
+    return test_engine
+
+
+@pytest.fixture
+def client(db_session):
+    from fastapi.testclient import TestClient
+    from app.core.database import get_db
+    from app.main import app
+
+    previous = app.dependency_overrides.copy()
+    app.dependency_overrides[get_db] = lambda: db_session
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides = previous
+
+
+@pytest.fixture
+def offline_client(monkeypatch):
+    from fastapi.testclient import TestClient
+    from app.core.database import engine, get_db
+    from app.main import app
+
+    def denied(*args, **kwargs):
+        raise AssertionError("Offline contract test attempted a database connection")
+
+    monkeypatch.setattr(engine, "connect", denied)
+    previous = app.dependency_overrides.copy()
+    app.dependency_overrides[get_db] = lambda: None
+    try:
+        with TestClient(app) as test_client:
+            yield test_client
+    finally:
+        app.dependency_overrides = previous
+
+
+@pytest.fixture
+def organiser(db_session):
+    from app.attendance.models import Organiser
+    from app.core.security import hash_password
+
+    organiser = Organiser(username="events-test@ttc", name="Test Organiser",
+                          password_hash=hash_password("test-login-password"))
+    db_session.add(organiser)
+    db_session.flush()
+    return organiser

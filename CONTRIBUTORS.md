@@ -29,3 +29,13 @@ This list is maintained by hand alongside the GitHub [contributors graph](https:
 Add new contributors below this line, following the format above.
 One bullet per contribution/PR, most recent contribution added to the bottom of their list.
 -->
+
+- **Shahan** ([@shxhxn](https://github.com/shxhxn))
+  - Public dynamic event registration form, field validation/error handling,
+    registration confirmation, frontend regression tests and integration with
+    the existing organiser application (`feat/event-registerations`, pending review).
+
+- **Vishad** ([@Inf3rno26](https://github.com/Inf3rno26))
+  - Registration API, participant validation, transactional registration/attendance
+    creation, duplicate checks and backend tests ported from the private
+    collaboration branch (`feat/event-registerations`, pending review).

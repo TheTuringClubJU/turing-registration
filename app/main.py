@@ -18,6 +18,8 @@ import app.attendance.models  # noqa: F401
 from app.attendance.router import router as attendance_router
 from app.core.database import engine
 from app.core.security import router as auth_router
+from app.events.router import router as events_router
+from app.registrations.router import router as registrations_router
 
 app = FastAPI(title="Turing Registration API")
 
@@ -65,3 +67,6 @@ def health_check():
 
 app.include_router(auth_router)
 app.include_router(attendance_router)
+
+app.include_router(events_router)
+app.include_router(registrations_router)
