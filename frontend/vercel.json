@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    {
+      "source": "/auth/:match*",
+      "destination": "https://turing-registration-api.onrender.com/auth/:match*"
+    },
+    {
+      "source": "/attendance/:match*",
+      "destination": "https://turing-registration-api.onrender.com/attendance/:match*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
