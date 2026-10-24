@@ -26,11 +26,6 @@ export default function ConfirmationScreen({ registration, event }) {
       <p style={{ color: "#86868b", fontSize: "14px", marginTop: "24px" }}>
         Check your inbox for confirmation details from the organisers.
       </p>
-      <div style={{ marginTop: "32px" }}>
-        <a href="/" style={{ color: "#2997ff", textDecoration: "none", fontSize: "14px" }}>
-          ← Back to check-in dashboard
-        </a>
-      </div>
     </section>
   );
 }
