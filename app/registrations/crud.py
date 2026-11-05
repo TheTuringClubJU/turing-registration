@@ -1,13 +1,15 @@
 """
 app/registrations/crud.py
 
-Transactional registration operations.
-Owns transaction boundary for atomic creation of Registration and Attendance rows.
-Locks the event row (SELECT ... FOR UPDATE) to prevent race conditions during
-concurrent email uniqueness checks.
+Transactional database operations for Vishad's registration workflow:
+1. Load/lock event by slug.
+2. Verify opening time and active status.
+3. Validate payload (slot counts, leads, normalization).
+4. Guard against duplicate participant emails for the event.
+5. Create Registration + Attendance records in one single atomic transaction.
 """
 
-import logging
+from typing import Any
 import random
 import string
 from uuid import UUID
@@ -22,11 +24,11 @@ from app.registrations.models import Registration, RegistrationStatus
 from app.registrations.schemas import RegistrationCreate
 from app.registrations.validators import validate_registration
 
-logger = logging.getLogger(__name__)
 
 def generate_unique_ticket_code(db: Session) -> str:
-    chars = "".join(c for c in string.ascii_uppercase + string.digits if c not in "IO01")
-    for _ in range(10):
+    """Generate a clean, unambiguous 6-character short code (e.g. TTC-X892)."""
+    chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+    for _ in range(5):
         code = "TTC-" + "".join(random.choices(chars, k=4))
         existing = db.scalar(select(Registration.id).where(Registration.ticket_code == code))
         if not existing:
@@ -110,11 +112,13 @@ def create_registration(
                 slots_kwargs[f"p{i}_name"] = p.name
                 slots_kwargs[f"p{i}_email"] = p.email
                 slots_kwargs[f"p{i}_phone"] = p.phone
+                slots_kwargs[f"p{i}_usn"] = p.usn
                 slots_kwargs[f"p{i}_is_lead"] = p.is_team_lead
             else:
                 slots_kwargs[f"p{i}_name"] = None
                 slots_kwargs[f"p{i}_email"] = None
                 slots_kwargs[f"p{i}_phone"] = None
+                slots_kwargs[f"p{i}_usn"] = None
                 slots_kwargs[f"p{i}_is_lead"] = False
 
         ticket_code = generate_unique_ticket_code(db)
