@@ -49,22 +49,26 @@ class Registration(Base):
     p1_name = Column(String(200), nullable=False)
     p1_email = Column(String(320), nullable=False)
     p1_phone = Column(String(20), nullable=False)
+    p1_usn = Column(String(50), nullable=True)
     p1_is_lead = Column(Boolean, nullable=False, default=True)
 
     # Slots 2-4 — nullable, filled up to max_team_size, required up to min_team_size
     p2_name = Column(String(200), nullable=True)
     p2_email = Column(String(320), nullable=True)
     p2_phone = Column(String(20), nullable=True)
+    p2_usn = Column(String(50), nullable=True)
     p2_is_lead = Column(Boolean, nullable=False, default=False)
 
     p3_name = Column(String(200), nullable=True)
     p3_email = Column(String(320), nullable=True)
     p3_phone = Column(String(20), nullable=True)
+    p3_usn = Column(String(50), nullable=True)
     p3_is_lead = Column(Boolean, nullable=False, default=False)
 
     p4_name = Column(String(200), nullable=True)
     p4_email = Column(String(320), nullable=True)
     p4_phone = Column(String(20), nullable=True)
+    p4_usn = Column(String(50), nullable=True)
     p4_is_lead = Column(Boolean, nullable=False, default=False)
 
     status = Column(
@@ -104,10 +108,8 @@ class Registration(Base):
                     "name": name,
                     "email": getattr(self, f"p{i}_email"),
                     "phone": getattr(self, f"p{i}_phone"),
+                    "usn": getattr(self, f"p{i}_usn", None),
                     "is_lead": getattr(self, f"p{i}_is_lead"),
                 }
             )
         return slots
-
-    def __repr__(self) -> str:
-        return f"<Registration {self.id} event={self.event_id} team={self.team_name}>"

@@ -86,21 +86,25 @@ CREATE TABLE registrations (
     p1_name         VARCHAR(200) NOT NULL,
     p1_email        VARCHAR(320) NOT NULL,
     p1_phone        VARCHAR(20)  NOT NULL,
+    p1_usn          VARCHAR(50),
     p1_is_lead      BOOLEAN NOT NULL DEFAULT TRUE,
 
     p2_name         VARCHAR(200),
     p2_email        VARCHAR(320),
     p2_phone        VARCHAR(20),
+    p2_usn          VARCHAR(50),
     p2_is_lead      BOOLEAN NOT NULL DEFAULT FALSE,
 
     p3_name         VARCHAR(200),
     p3_email        VARCHAR(320),
     p3_phone        VARCHAR(20),
+    p3_usn          VARCHAR(50),
     p3_is_lead      BOOLEAN NOT NULL DEFAULT FALSE,
 
     p4_name         VARCHAR(200),
     p4_email        VARCHAR(320),
     p4_phone        VARCHAR(20),
+    p4_usn          VARCHAR(50),
     p4_is_lead      BOOLEAN NOT NULL DEFAULT FALSE,
 
     status          registration_status NOT NULL DEFAULT 'registered',

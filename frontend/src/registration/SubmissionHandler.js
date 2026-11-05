@@ -30,10 +30,13 @@ export function buildSubmission(event, teamName, slots) {
   if (team && !teamName.trim()) fields.team_name = 'Enter your team name.';
   slots.forEach((slot, index) => {
     const participant = {
-      name: slot.name.trim(), email: slot.email.trim().toLowerCase(), phone: slot.phone.trim(),
+      name: (slot.name || '').trim(),
+      email: (slot.email || '').trim().toLowerCase(),
+      phone: (slot.phone || '').trim(),
+      usn: (slot.usn || '').trim().toUpperCase() || null,
       is_team_lead: index === 0,
     };
-    const filled = participant.name || participant.email || participant.phone;
+    const filled = participant.name || participant.email || participant.phone || participant.usn;
     if (!filled && index >= event.min_team_size) return;
     if (!participant.name) fields[`participants.${index}.name`] = 'Enter a name.';
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(participant.email)) {
@@ -43,6 +46,9 @@ export function buildSubmission(event, teamName, slots) {
     }
     if (!/^\+[1-9][0-9]{7,14}$/.test(participant.phone)) {
       fields[`participants.${index}.phone`] = 'Use a country code, for example +919876543210.';
+    }
+    if (!participant.usn) {
+      fields[`participants.${index}.usn`] = 'Enter USN / Application number.';
     }
     seen.add(participant.email);
     indexMap.push(index);

@@ -12,12 +12,20 @@ class Participant(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     email: EmailStr = Field(max_length=320)
     phone: str = Field(pattern=r"^\+[1-9][0-9]{7,14}$")
+    usn: str | None = Field(default=None, max_length=50)
     is_team_lead: bool = Field(default=False, strict=True)
 
     @field_validator("email", mode="after")
     @classmethod
     def normalized_email(cls, value: str) -> str:
         return value.lower()
+
+    @field_validator("usn", mode="after")
+    @classmethod
+    def normalized_usn(cls, value: str | None) -> str | None:
+        if value:
+            return value.strip().upper()
+        return None
 
 
 class RegistrationCreate(BaseModel):
